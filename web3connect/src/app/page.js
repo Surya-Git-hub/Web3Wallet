@@ -6,48 +6,34 @@ import {
   usePrepareContractWrite,
   useContractWrite,
   useContractRead,
-  useAccount
+  useAccount,
 } from "wagmi";
 import { useWeb3ModalTheme } from "@web3modal/react";
 import abi from "../abi/abi.json"
-// import Image from "next/image";
-// import { ethers } from "ethers";
+import { useState } from 'react';
 
 export default function Home() {
-  // const { address } = useAccount();
   const { theme, setTheme } = useWeb3ModalTheme();
   const { disconnect } = useDisconnect();
-  const { address, isConnecting, isDisconnected } = useAccount();
+  const { address, isConnecting, isDisconnected, isConnected } = useAccount();
+
+  const [userTranscations, setUserTransactions] = useState([]);
 
   setTheme({ themeColor: "blackWhite" });
 
-  // Use contract read
+  let { data: balance, refetch } = useContractRead({
 
-  // const { data: readTutorialContract, isError } = useContractRead({
-  //   address: "0x4c3089cB72572947C4eD822054CC25527d8EB9C6",
-  //   abi: abi,
-  //   functionName: "balanceOf",
-  //   account: address,
-  //   args: [address],
-  //   onError(error) {
-  //     console.log('Error', error)
-  //   },
-  // });
-  // console.log("read data",readTutorialContract);
-  let readvalue;
-  const { refetch } = useContractRead({
     address: "0x4c3089cB72572947C4eD822054CC25527d8EB9C6",
     abi: abi,
     functionName: "balanceOf",
     account: address,
     args: [address],
     onError(error) {
-      console.log('Error', error)
+      console.log('Error in read operation', error, address)
     },
     onSuccess(data) {
-      readvalue = data;
-      console.log(readvalue);
-    }
+      console.log("read success", data)
+    },
   });
 
   const { config } = usePrepareContractWrite({
@@ -59,26 +45,29 @@ export default function Home() {
     onError(error) {
       console.log('Error', error)
     },
+    onSuccess(data) {
+      console.log("write data", data);
+    },
   });
 
-  const { data, isLoading, isSuccess, write: mintNFT } = useContractWrite(config);
+  const { data, isLoading, isSuccess, write: mintNFT, } = useContractWrite({
+    ...config,
+    onSuccess(data) {
+      setUserTransactions([...userTranscations, data.hash]);
+      console.log(data)
+    }
+  });
 
   return (
-    <main className="flex min-h-screen items-center justify-between p-24">
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div>
-        <h1>Web3 Modal V2 demo</h1>
+        <h1 className='flex flex-col items-center justify-between p-15'>Web3 Modal V2 demo</h1>
+        <br />
         {address ? <div>connected to {address}</div> : <></>}
       </div>
-      <div
-        style={{
-          marginRight: "2em",
-          display: "flex",
-          paddingRight: "1em",
-        }}
-      >
 
-        <Web3Button />
-      </div>
+      <Web3Button className='flex flex-col items-center justify-between p-15' />
+
       <button
         onClick={() => mintNFT?.()}
         style={{
@@ -93,7 +82,7 @@ export default function Home() {
       </button>
       <button
         onClick={async () => {
-          await refetch();
+          refetch();
         }}
         style={{
           color: "black",
@@ -105,8 +94,16 @@ export default function Home() {
       >
         NFT balance
       </button>
+      {balance && <>NFT Balance : {(balance.toString())}</>}
+      <br />
       {isLoading && <div>Check Wallet</div>}
-      {isSuccess && <div>Transaction: {JSON.stringify(data)}</div>}
+      {isSuccess && (
+        <ul>
+          {userTranscations.map((item, index) => (
+            <li key={index}>transaction hash: {JSON.stringify(item)}</li>
+          ))}
+        </ul>
+      )}
 
 
     </main>

@@ -2,7 +2,7 @@
 import './globals.css'
 import { Inter } from 'next/font/google'
 import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum'
-import { Web3Modal ,useWeb3Modal } from '@web3modal/react'
+import { Web3Modal } from '@web3modal/react'
 import { configureChains, createConfig, WagmiConfig } from 'wagmi'
 import { arbitrum, mainnet, polygon, sepolia, goerli } from 'wagmi/chains'
 
@@ -28,8 +28,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={inter}>
-      <WagmiConfig config={wagmiConfig}>
-        {children}
+        <WagmiConfig config={wagmiConfig}>
+          {children}
         </WagmiConfig>
         <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
       </body>
