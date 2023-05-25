@@ -1,5 +1,5 @@
 "use client"
-import { Web3Button, useWeb3Modal, Web3Modal } from '@web3modal/react'
+import { Web3Button } from '@web3modal/react'
 
 import {
   useDisconnect,
@@ -8,13 +8,17 @@ import {
   useContractRead,
   useAccount,
 } from "wagmi";
+
 import { useWeb3ModalTheme } from "@web3modal/react";
 import abi from "../abi/abi.json"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Home() {
   const { theme, setTheme } = useWeb3ModalTheme();
   const { disconnect } = useDisconnect();
+  const [walletMounted, setWalletMounted] = useState(false);
+
+
   const { address, isConnecting, isDisconnected, isConnected } = useAccount();
 
   const [userTranscations, setUserTransactions] = useState([]);
@@ -26,8 +30,8 @@ export default function Home() {
     address: "0x4c3089cB72572947C4eD822054CC25527d8EB9C6",
     abi: abi,
     functionName: "balanceOf",
-    account: address,
     args: [address],
+    enabled: isConnected,
     onError(error) {
       console.log('Error in read operation', error, address)
     },
@@ -35,6 +39,12 @@ export default function Home() {
       console.log("read success", data)
     },
   });
+
+
+  useEffect(() => {
+    setWalletMounted(true);
+  }, []);
+
 
   const { config } = usePrepareContractWrite({
     address: "0x4c3089cB72572947C4eD822054CC25527d8EB9C6",
@@ -63,7 +73,7 @@ export default function Home() {
       <div>
         <h1 className='flex flex-col items-center justify-between p-15'>Web3 Modal V2 demo</h1>
         <br />
-        {address ? <div>connected to {address}</div> : <></>}
+        {walletMounted && address ? <div>connected to {address}</div> : <></>}
       </div>
 
       <Web3Button className='flex flex-col items-center justify-between p-15' />
@@ -94,10 +104,10 @@ export default function Home() {
       >
         NFT balance
       </button>
-      {balance && <>NFT Balance : {(balance.toString())}</>}
+      {walletMounted && balance && <>NFT Balance : {(balance.toString())}</>}
       <br />
-      {isLoading && <div>Check Wallet</div>}
-      {isSuccess && (
+      {walletMounted && isLoading && <div>Check Wallet</div>}
+      {walletMounted && isSuccess && (
         <ul>
           {userTranscations.map((item, index) => (
             <li key={index}>transaction hash: {JSON.stringify(item)}</li>
